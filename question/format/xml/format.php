@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/xmlize.php');
+require_once($CFG->dirroot . '/question/editlib.php');
 if (!class_exists('qformat_default')) {
     // This is ugly, but this class is also (ab)used by mod/lesson, which defines
     // a different base class in mod/lesson/format.php. Thefore, we can only
@@ -1168,10 +1169,15 @@ class qformat_xml extends qformat_default {
         // Categories are a special case.
         if ($question->qtype == 'category') {
             $categorypath = $this->writetext($question->category);
+            $categoryinfo = $this->writetext($question->info);
             $expout .= "  <question type=\"category\">\n";
             $expout .= "    <category>\n";
             $expout .= "        {$categorypath}\n";
             $expout .= "    </category>\n";
+            $expout .= "    <info>\n";
+            $expout .= "        {$categoryinfo}\n";
+            $expout .= "        <format>{$question->infoformat}</format>\n";
+            $expout .= "    </info>\n";
             $expout .= "  </question>\n";
             return $expout;
         }
