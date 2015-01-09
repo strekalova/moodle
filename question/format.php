@@ -368,7 +368,9 @@ class qformat_default {
                 if ($this->catfromfile) {
                     // find/create category object
                     $catpath = $question->category;
-                    $newcategory = $this->create_category_path($catpath);
+                    $catinfo['info'] = $question->info;
+                    $catinfo['format'] = $question->infoformat;
+                    $newcategory = $this->create_category_path($catpath, $catinfo);
                     if (!empty($newcategory)) {
                         $this->category = $newcategory;
                     }
@@ -481,10 +483,11 @@ class qformat_default {
      * but if $getcontext is set then ignore the context and use selected category context.
      *
      * @param string catpath delimited category path
+     * @param array catinfo with description (with format) of category
      * @param int courseid course to search for categories
      * @return mixed category object or null if fails
      */
-    protected function create_category_path($catpath) {
+    protected function create_category_path($catpath, $catinfo) {
         global $DB;
         $catnames = $this->split_category_path($catpath);
         $parent = 0;
@@ -508,17 +511,33 @@ class qformat_default {
         $this->importcontext = $context;
 
         // Now create any categories that need to be created.
-        foreach ($catnames as $catname) {
+        foreach ($catnames as $key => $catname) {
             if ($category = $DB->get_record('question_categories',
                     array('name' => $catname, 'contextid' => $context->id, 'parent' => $parent))) {
                 $parent = $category->id;
+                // Adding description in category if empty.
+                if ($key == (count($catnames) - 1) && $catinfo['info'] !== null && $catinfo['info'] !== ""
+                    && $category->info == "") {
+                    $category->info = $catinfo['info'];
+                    if ($catinfo['format'] !== null && $catinfo['format'] !== "") {
+                        $category->infoformat = $catinfo['format'];
+                    }
+                    $DB->update_record('question_categories', $category);
+                }
             } else {
                 require_capability('moodle/question:managecategory', $context);
                 // create the new category
                 $category = new stdClass();
                 $category->contextid = $context->id;
                 $category->name = $catname;
-                $category->info = '';
+                if ($key == (count($catnames) - 1) && $catinfo['info'] !== null) {
+                    $category->info = $catinfo['info'];
+                    if ($catinfo['format'] !== null && $catinfo['format'] !== "") {
+                        $category->infoformat = $catinfo['format'];
+                    }
+                } else {
+                    $category->info = '';
+                }
                 $category->parent = $parent;
                 $category->sortorder = 999;
                 $category->stamp = make_unique_id_code();

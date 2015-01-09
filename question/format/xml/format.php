@@ -852,7 +852,7 @@ class qformat_xml extends qformat_default {
 
         $datasets = $question['#']['dataset_definitions'][0]['#']['dataset_definition'];
         $qo->dataset = array();
-        $qo->datasetindex= 0;
+        $qo->datasetindex = 0;
         foreach ($datasets as $dataset) {
             $qo->datasetindex++;
             $qo->dataset[$qo->datasetindex] = new stdClass();
@@ -908,6 +908,13 @@ class qformat_xml extends qformat_default {
         $qo = new stdClass();
         $qo->qtype = 'category';
         $qo->category = $this->import_text($question['#']['category'][0]['#']['text']);
+        if (array_key_exists('info', $question['#'])) {
+            $qo->info = $this->import_text($question['#']['info'][0]['#']['text']);
+            $qo->infoformat = $this->import_text($question['#']['info'][0]['#']['format']);
+        } else {
+            $qo->info = '';
+            $qo->infoformat = 0;
+        }
         return $qo;
     }
 
