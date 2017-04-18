@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+        <text>$course$/Eta</text>
+    </category>
+	
+    <info format="1">
+        <text>This is Eta category for test</text>
+    </info>
+  </question>
+
+<!-- question: 94  -->
+  <question type="truefalse">
+    <name>
+      <text>Eta Question</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Testing Eta Question</p>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>1.0000000</penalty>
+    <hidden>0</hidden>
+    <answer fraction="100" format="moodle_auto_format">
+      <text>true</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="moodle_auto_format">
+      <text>false</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+        <text>$course$/Eta/Theta</text>
+    </category>
+	
+    <info format="2">
+        <text>This is Theta category for test</text>
+    </info>
+  </question>
+
+<!-- question: 95  -->
+  <question type="truefalse">
+    <name>
+      <text>Theta Question</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Testing Theta Question</p>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>1.0000000</penalty>
+    <hidden>0</hidden>
+    <answer fraction="100" format="moodle_auto_format">
+      <text>true</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="moodle_auto_format">
+      <text>false</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+</quiz>

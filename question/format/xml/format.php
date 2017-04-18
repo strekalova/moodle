@@ -110,7 +110,7 @@ class qformat_xml extends qformat_default {
         if (empty($text)) {
             return '';
         }
-        $data = $text[0]['#'];
+        $data = $text;
         return trim($data);
     }
 
@@ -851,7 +851,7 @@ class qformat_xml extends qformat_default {
 
         $datasets = $question['#']['dataset_definitions'][0]['#']['dataset_definition'];
         $qo->dataset = array();
-        $qo->datasetindex= 0;
+        $qo->datasetindex = 0;
         foreach ($datasets as $dataset) {
             $qo->datasetindex++;
             $qo->dataset[$qo->datasetindex] = new stdClass();
@@ -906,7 +906,15 @@ class qformat_xml extends qformat_default {
     protected function import_category($question) {
         $qo = new stdClass();
         $qo->qtype = 'category';
-        $qo->category = $this->import_text($question['#']['category'][0]['#']['text']);
+        $qo->category = $this->import_text($question['#']['category'][0]['#']['text'][0]['#']);
+        if (array_key_exists('info', $question['#'])) {
+            $qo->info = $this->import_text($question['#']['info'][0]['#']['text'][0]['#']);
+            $qo->infoformat = $this->import_text($question['#']['info'][0]['@']['format']);
+
+        } else {
+            $qo->info = '';
+            $qo->infoformat = 0;
+        }
         return $qo;
     }
 
@@ -1168,10 +1176,14 @@ class qformat_xml extends qformat_default {
         // Categories are a special case.
         if ($question->qtype == 'category') {
             $categorypath = $this->writetext($question->category);
+            $categoryinfo = $this->writetext($question->info);
             $expout .= "  <question type=\"category\">\n";
             $expout .= "    <category>\n";
             $expout .= "        {$categorypath}\n";
             $expout .= "    </category>\n";
+            $expout .= "    <info format=\"{$question->infoformat}\">";
+            $expout .= "        {$categoryinfo}\n";
+            $expout .= "    </info>\n";
             $expout .= "  </question>\n";
             return $expout;
         }

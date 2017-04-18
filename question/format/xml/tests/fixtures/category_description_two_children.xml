@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+        <text>$course$/Mu</text>
+    </category>
+	
+    <info format="1">
+        <text>This is Mu category for test</text>
+    </info>
+  </question>
+
+<!-- question: 99  -->
+  <question type="truefalse">
+    <name>
+      <text>Mu Question</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>testing Mu Question</p>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>1.0000000</penalty>
+    <hidden>0</hidden>
+    <answer fraction="100" format="moodle_auto_format">
+      <text>true</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="moodle_auto_format">
+      <text>false</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+        <text>$course$/Mu/Nu</text>
+    </category>
+	
+    <info format="2">
+        <text>This is Nu category for test</text>
+    </info>
+  </question>
+
+<!-- question: 100  -->
+  <question type="truefalse">
+    <name>
+      <text>Nu Question</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Testing Nu Question</p>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>1.0000000</penalty>
+    <hidden>0</hidden>
+    <answer fraction="100" format="moodle_auto_format">
+      <text>true</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="moodle_auto_format">
+      <text>false</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+        <text>$course$/Mu/Xi</text>
+    </category>
+	
+    <info format="3">
+        <text>This is Xi category for test</text>
+    </info>
+  </question>
+
+<!-- question: 101  -->
+  <question type="truefalse">
+    <name>
+      <text>Xi Question</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Testing Xi Question</p>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>1.0000000</penalty>
+    <hidden>0</hidden>
+    <answer fraction="100" format="moodle_auto_format">
+      <text>true</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="moodle_auto_format">
+      <text>false</text>
+      <feedback format="html">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+</quiz>

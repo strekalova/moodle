@@ -25,7 +25,7 @@
 
 
 defined('MOODLE_INTERNAL') || die();
-
+require_once($CFG->dirroot . '/question/editlib.php');
 
 /**
  * Base class for question import and export formats.
@@ -368,7 +368,7 @@ class qformat_default {
                 if ($this->catfromfile) {
                     // find/create category object
                     $catpath = $question->category;
-                    $newcategory = $this->create_category_path($catpath);
+                    $newcategory = $this->create_category_path($catpath, (array)$question);
                     if (!empty($newcategory)) {
                         $this->category = $newcategory;
                     }
@@ -481,10 +481,10 @@ class qformat_default {
      * but if $getcontext is set then ignore the context and use selected category context.
      *
      * @param string catpath delimited category path
-     * @param int courseid course to search for categories
+     * @param array question
      * @return mixed category object or null if fails
      */
-    protected function create_category_path($catpath) {
+    protected function create_category_path($catpath, $question = null) {
         global $DB;
         $catnames = $this->split_category_path($catpath);
         $parent = 0;
@@ -508,17 +508,33 @@ class qformat_default {
         $this->importcontext = $context;
 
         // Now create any categories that need to be created.
-        foreach ($catnames as $catname) {
+        foreach ($catnames as $key => $catname) {
             if ($category = $DB->get_record('question_categories',
-                    array('name' => $catname, 'contextid' => $context->id, 'parent' => $parent))) {
+                array('name' => $catname, 'contextid' => $context->id, 'parent' => $parent))) {
                 $parent = $category->id;
+                // Adding description in category if empty.
+                if ($key == (count($catnames) - 1) && $question['info'] !== null && $question['info'] !== ""
+                    && $category->info == "") {
+                    $category->info = $question['info'];
+                    if ($question['infoformat'] !== null && $question['infoformat'] !== "") {
+                        $category->infoformat = $question['infoformat'];
+                    }
+                    $DB->update_record('question_categories', $category);
+                }
             } else {
                 require_capability('moodle/question:managecategory', $context);
                 // create the new category
                 $category = new stdClass();
                 $category->contextid = $context->id;
                 $category->name = $catname;
-                $category->info = '';
+                if ($key == (count($catnames) - 1) && $question['info'] !== null) {
+                    $category->info = $question['info'];
+                    if ($question['infoformat'] !== null && $question['infoformat'] !== "") {
+                        $category->infoformat = $question['infoformat'];
+                    }
+                } else {
+                    $category->info = '';
+                }
                 $category->parent = $parent;
                 $category->sortorder = 999;
                 $category->stamp = make_unique_id_code();
@@ -766,8 +782,13 @@ class qformat_default {
     public function exportprocess() {
         global $CFG, $OUTPUT, $DB, $USER;
 
-        // get the questions (from database) in this category
-        // only get q's with no parents (no cloze subquestions specifically)
+        // Get the parents (from database) for this category.
+        if ($this->category) {
+            $parents = question_categorylist_parents($this->category->id);
+        }
+
+        // Get the questions (from database) in this category.
+        // Only get q's with no parents (no cloze subquestions specifically).
         if ($this->category) {
             $questions = get_questions_category($this->category, true);
         } else {
@@ -776,51 +797,81 @@ class qformat_default {
 
         $count = 0;
 
-        // results are first written into string (and then to a file)
-        // so create/initialize the string here
+        // Results are first written into string (and then to a file).
+        // So create/initialize the string here.
         $expout = "";
 
-        // track which category questions are in
-        // if it changes we will record the category change in the output
-        // file if selected. 0 means that it will get printed before the 1st question
+        // Track which category questions are in.
+        // If it changes we will record the category change in the output file if selected.
+        // 0 means that it will get printed before the 1st question.
         $trackcategory = 0;
 
-        // iterate through questions
+        // Array for categories which was written to file.
+        $writtencategories = array();
+
+        // Iterate through parents categories.
+        foreach ($parents as $parent) {
+            $categoryname = $this->get_category_path($parent, $this->contexttofile);
+            $categoryinfo = $DB->get_record('question_categories', array('id' => $parent), 'info, infoformat', MUST_EXIST);
+
+            // Create 'dummy' question for category export.
+            $dummyquestion = $this->create_dummy_question($categoryname, $categoryinfo);
+            $expout .= $this->writequestion($dummyquestion) . "\n";
+            $writtencategories[] = $parent;
+        }
+        // Iterate through questions.
         foreach ($questions as $question) {
-            // used by file api
+            // Used by file api.
             $contextid = $DB->get_field('question_categories', 'contextid',
-                    array('id' => $question->category));
+                array('id' => $question->category));
             $question->contextid = $contextid;
 
-            // do not export hidden questions
+            // Do not export hidden questions.
             if (!empty($question->hidden)) {
                 continue;
             }
 
-            // do not export random questions
+            // Do not export random questions.
             if ($question->qtype == 'random') {
                 continue;
             }
 
-            // check if we need to record category change
+            // Check if we need to record category change.
             if ($this->cattofile) {
                 if ($question->category != $trackcategory) {
                     $trackcategory = $question->category;
-                    $categoryname = $this->get_category_path($trackcategory, $this->contexttofile);
 
-                    // create 'dummy' question for category export
-                    $dummyquestion = new stdClass();
-                    $dummyquestion->qtype = 'category';
-                    $dummyquestion->category = $categoryname;
-                    $dummyquestion->name = 'Switch category to ' . $categoryname;
-                    $dummyquestion->id = 0;
-                    $dummyquestion->questiontextformat = '';
-                    $dummyquestion->contextid = 0;
+                    $trackcategoryparents = question_categorylist_parents($trackcategory);
+                    // Check if we need to record empty parents categories.
+                    foreach ($trackcategoryparents as $trackcategoryparent) {
+                        // If parent wasn't written.
+                        if (!in_array($trackcategoryparent, $writtencategories)) {
+                            // If parent is empty.
+                            if (!count($DB->get_records('question', array('category' => $trackcategoryparent)))) {
+                                $categoryname = $this->get_category_path($trackcategoryparent, $this->contexttofile);
+                                $categoryinfo = $DB->get_record('question_categories', array('id' => $trackcategoryparent),
+                                    'info, infoformat', MUST_EXIST);
+
+                                // Create 'dummy' question for category export.
+                                $dummyquestion = $this->create_dummy_question($categoryname, $categoryinfo);
+                                $expout .= $this->writequestion($dummyquestion) . "\n";
+                                $writtencategories[] = $trackcategoryparent;
+                            }
+                        }
+                    }
+
+                    $categoryname = $this->get_category_path($trackcategory, $this->contexttofile);
+                    $categoryinfo = $DB->get_record('question_categories', array('id' => $trackcategory),
+                        'info, infoformat', MUST_EXIST);
+
+                    // Create 'dummy' question for category export.
+                    $dummyquestion = $this->create_dummy_question($categoryname, $categoryinfo);
                     $expout .= $this->writequestion($dummyquestion) . "\n";
+                    $writtencategories[] = $trackcategory;
                 }
             }
 
-            // export the question displaying message
+            // Export the question displaying message.
             $count++;
 
             if (question_has_capability_on($question, 'view', $question->category)) {
@@ -828,18 +879,37 @@ class qformat_default {
             }
         }
 
-        // continue path for following error checks
+        // Continue path for following error checks.
         $course = $this->course;
         $continuepath = "{$CFG->wwwroot}/question/export.php?courseid={$course->id}";
 
-        // did we actually process anything
-        if ($count==0) {
+        // Did we actually process anything.
+        if ($count == 0) {
             print_error('noquestions', 'question', $continuepath);
         }
 
-        // final pre-process on exported data
+        // Final pre-process on exported data.
         $expout = $this->presave_process($expout);
         return $expout;
+    }
+    /**
+     * Create 'dummy' question for category export.
+     * @param string $categoryname the name of the category
+     * @param mixed $categoryinfo description of the category
+     * @return stdClass 'dummy' question for category
+     */
+    public function create_dummy_question($categoryname, $categoryinfo) {
+        $dummyquestion = new stdClass();
+        $dummyquestion->qtype = 'category';
+        $dummyquestion->category = $categoryname;
+        $dummyquestion->id = 0;
+        $dummyquestion->questiontextformat = '';
+        $dummyquestion->contextid = 0;
+        $dummyquestion->info = $categoryinfo->info;
+        $dummyquestion->infoformat = $categoryinfo->infoformat;
+        $dummyquestion->name = 'Switch category to ' . $categoryname;
+
+        return $dummyquestion;
     }
 
     /**
